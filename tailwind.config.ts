@@ -25,9 +25,14 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "#22919A",
+          foreground: "#FFFFFF",
         },
+        "doctor-primary": "#22919A",
+        "doctor-text": "#021C5A",
+        "doctor-accent": "#88AA47",
+        "doctor-blue": "#3398A0",
+        "doctor-cyan": "#06A7DC",
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",

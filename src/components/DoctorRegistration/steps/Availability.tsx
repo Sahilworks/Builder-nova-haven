@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,9 +69,14 @@ const Availability: React.FC<AvailabilityProps> = ({
   onNext,
   onPrevious,
 }) => {
-  const [selectedClinic, setSelectedClinic] = useState<string>(
-    formData.clinics[0]?.id || "",
-  );
+  const [selectedClinic, setSelectedClinic] = useState<string>("");
+
+  // Set initial clinic when clinics are available
+  useEffect(() => {
+    if (formData.clinics && formData.clinics.length > 0 && !selectedClinic) {
+      setSelectedClinic(formData.clinics[0].id);
+    }
+  }, [formData.clinics, selectedClinic]);
 
   const updateClinicAvailability = (
     clinicId: string,
@@ -79,27 +84,46 @@ const Availability: React.FC<AvailabilityProps> = ({
     field: string,
     value: any,
   ) => {
+    // Initialize clinic availability if it doesn't exist
+    const currentClinicAvailability = formData.clinicAvailability || {};
+    const currentClinicData = currentClinicAvailability[clinicId] || {
+      days: {},
+    };
+    const currentDayData = currentClinicData.days[day] || {
+      isWorking: false,
+      workHours: { start: "09:00", end: "17:00" },
+      breakTime: { start: "13:00", end: "14:00" },
+    };
+
     const updatedAvailability = {
-      ...formData.clinicAvailability,
+      ...currentClinicAvailability,
       [clinicId]: {
-        ...formData.clinicAvailability[clinicId],
+        ...currentClinicData,
         days: {
-          ...formData.clinicAvailability[clinicId]?.days,
+          ...currentClinicData.days,
           [day]: {
-            ...formData.clinicAvailability[clinicId]?.days?.[day],
+            ...currentDayData,
             [field]: value,
           },
         },
       },
     };
+
     updateFormData({ clinicAvailability: updatedAvailability });
   };
 
   const updateOnlineAvailability = (day: string, field: string, value: any) => {
+    const currentOnlineAvailability = formData.onlineConsultationHours || {};
+    const currentDayData = currentOnlineAvailability[day] || {
+      isAvailable: false,
+      hours: { start: "09:00", end: "17:00" },
+      breakTime: { start: "13:00", end: "14:00" },
+    };
+
     const updatedAvailability = {
-      ...formData.onlineConsultationHours,
+      ...currentOnlineAvailability,
       [day]: {
-        ...formData.onlineConsultationHours[day],
+        ...currentDayData,
         [field]: value,
       },
     };
@@ -107,8 +131,19 @@ const Availability: React.FC<AvailabilityProps> = ({
   };
 
   const getClinicDayAvailability = (clinicId: string, day: string) => {
+    if (
+      !formData.clinicAvailability ||
+      !formData.clinicAvailability[clinicId]
+    ) {
+      return {
+        isWorking: false,
+        workHours: { start: "09:00", end: "17:00" },
+        breakTime: { start: "13:00", end: "14:00" },
+      };
+    }
+
     return (
-      formData.clinicAvailability[clinicId]?.days?.[day] || {
+      formData.clinicAvailability[clinicId].days?.[day] || {
         isWorking: false,
         workHours: { start: "09:00", end: "17:00" },
         breakTime: { start: "13:00", end: "14:00" },
@@ -117,6 +152,14 @@ const Availability: React.FC<AvailabilityProps> = ({
   };
 
   const getOnlineDayAvailability = (day: string) => {
+    if (!formData.onlineConsultationHours) {
+      return {
+        isAvailable: false,
+        hours: { start: "09:00", end: "17:00" },
+        breakTime: { start: "13:00", end: "14:00" },
+      };
+    }
+
     return (
       formData.onlineConsultationHours[day] || {
         isAvailable: false,
@@ -128,19 +171,70 @@ const Availability: React.FC<AvailabilityProps> = ({
 
   const isFormValid = () => {
     // Check if at least one clinic has at least one working day
-    const hasClinicAvailability = Object.values(
-      formData.clinicAvailability,
-    ).some((clinic) =>
-      Object.values(clinic.days || {}).some((day) => day.isWorking),
-    );
+    const hasClinicAvailability =
+      formData.clinicAvailability &&
+      Object.values(formData.clinicAvailability).some(
+        (clinic) =>
+          clinic.days &&
+          Object.values(clinic.days).some((day) => day.isWorking),
+      );
 
     // Check if online consultation has at least one available day
-    const hasOnlineAvailability = Object.values(
-      formData.onlineConsultationHours,
-    ).some((day) => day.isAvailable);
+    const hasOnlineAvailability =
+      formData.onlineConsultationHours &&
+      Object.values(formData.onlineConsultationHours).some(
+        (day) => day.isAvailable,
+      );
 
     return hasClinicAvailability || hasOnlineAvailability;
   };
+
+  // Show message if no clinics are available
+  if (!formData.clinics || formData.clinics.length === 0) {
+    return (
+      <>
+        <CardContent className="p-8">
+          <div className="text-center py-12">
+            <Building className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-600 mb-2">
+              No Clinics Available
+            </h3>
+            <p className="text-gray-500 mb-6">
+              Please add at least one clinic in the Contact Information step
+              before setting availability.
+            </p>
+            <Button
+              onClick={onPrevious}
+              variant="outline"
+              className="border-doctor-primary text-doctor-primary hover:bg-doctor-primary hover:text-white"
+            >
+              Go Back to Add Clinics
+            </Button>
+          </div>
+        </CardContent>
+
+        <CardFooter className="flex justify-between p-8 bg-gray-50">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onPrevious}
+            className="border-gray-300"
+          >
+            Previous
+          </Button>
+
+          <Button
+            type="button"
+            onClick={onNext}
+            disabled={true}
+            className="bg-gray-400 cursor-not-allowed px-8"
+          >
+            Next Step
+          </Button>
+        </CardFooter>
+      </>
+    );
+  }
 
   return (
     <>

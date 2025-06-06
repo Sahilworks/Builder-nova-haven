@@ -5,7 +5,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Search } from "lucide-react";
+import {
+  Plus,
+  X,
+  Search,
+  Heart,
+  Microscope,
+  Brain,
+  Bone,
+  Baby,
+  UserCheck,
+  Stethoscope,
+  Users,
+  Ear,
+  Eye,
+  Teeth,
+  Activity,
+  Stomach,
+  Lungs,
+  Shield,
+  Camera,
+  Syringe,
+  Ambulance,
+  FlaskConical,
+  Dumbbell,
+} from "lucide-react";
 import { DoctorFormData } from "../MultiStepForm";
 import { cn } from "@/lib/utils";
 
@@ -19,26 +43,26 @@ interface SpecializationProps {
 }
 
 const specialities = [
-  { name: "Cardiology", icon: "❤️" },
-  { name: "Dermatology", icon: "🔬" },
-  { name: "Neurology", icon: "🧠" },
-  { name: "Orthopedics", icon: "🦴" },
-  { name: "Pediatrics", icon: "👶" },
-  { name: "Psychiatry", icon: "🧘" },
-  { name: "General Medicine", icon: "🩺" },
-  { name: "Gynecology", icon: "👩" },
-  { name: "ENT", icon: "👂" },
-  { name: "Ophthalmology", icon: "👁️" },
-  { name: "Dentistry", icon: "🦷" },
-  { name: "Urology", icon: "🫘" },
-  { name: "Gastroenterology", icon: "🫃" },
-  { name: "Pulmonology", icon: "🫁" },
-  { name: "Oncology", icon: "🎗️" },
-  { name: "Radiology", icon: "📸" },
-  { name: "Anesthesiology", icon: "💉" },
-  { name: "Emergency Medicine", icon: "🚑" },
-  { name: "Pathology", icon: "🔬" },
-  { name: "Physical Medicine", icon: "🏃" },
+  { name: "Cardiology", icon: Heart },
+  { name: "Dermatology", icon: Microscope },
+  { name: "Neurology", icon: Brain },
+  { name: "Orthopedics", icon: Bone },
+  { name: "Pediatrics", icon: Baby },
+  { name: "Psychiatry", icon: UserCheck },
+  { name: "General Medicine", icon: Stethoscope },
+  { name: "Gynecology", icon: Users },
+  { name: "ENT", icon: Ear },
+  { name: "Ophthalmology", icon: Eye },
+  { name: "Dentistry", icon: Teeth },
+  { name: "Urology", icon: Activity },
+  { name: "Gastroenterology", icon: Stomach },
+  { name: "Pulmonology", icon: Lungs },
+  { name: "Oncology", icon: Shield },
+  { name: "Radiology", icon: Camera },
+  { name: "Anesthesiology", icon: Syringe },
+  { name: "Emergency Medicine", icon: Ambulance },
+  { name: "Pathology", icon: FlaskConical },
+  { name: "Physical Medicine", icon: Dumbbell },
 ];
 
 const servicesBySpeciality = {
@@ -333,35 +357,57 @@ const Specialization: React.FC<SpecializationProps> = ({
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredSpecialities.map((speciality) => (
-                      <div
-                        key={speciality.name}
-                        onClick={() => handleSpecialitySelect(speciality.name)}
-                        className={cn(
-                          "p-4 border rounded-lg cursor-pointer transition-all duration-200",
-                          formData.speciality === speciality.name
-                            ? "bg-doctor-primary text-white border-doctor-primary shadow-md"
-                            : "bg-white border-gray-200 hover:border-doctor-primary hover:bg-doctor-primary/5",
-                        )}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <span className="text-2xl">{speciality.icon}</span>
-                          <div>
-                            <p className="font-medium">{speciality.name}</p>
-                            <p
+                    {filteredSpecialities.map((speciality) => {
+                      const IconComponent = speciality.icon;
+
+                      return (
+                        <div
+                          key={speciality.name}
+                          onClick={() =>
+                            handleSpecialitySelect(speciality.name)
+                          }
+                          className={cn(
+                            "p-4 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md",
+                            formData.speciality === speciality.name
+                              ? "bg-doctor-primary text-white border-doctor-primary shadow-md"
+                              : "bg-white border-gray-200 hover:border-doctor-primary hover:bg-doctor-primary/5",
+                          )}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div
                               className={cn(
-                                "text-xs",
+                                "p-2 rounded-lg",
                                 formData.speciality === speciality.name
-                                  ? "text-white/80"
-                                  : "text-gray-500",
+                                  ? "bg-white/20"
+                                  : "bg-doctor-primary/10",
                               )}
                             >
-                              Click to select
-                            </p>
+                              <IconComponent
+                                className={cn(
+                                  "w-6 h-6",
+                                  formData.speciality === speciality.name
+                                    ? "text-white"
+                                    : "text-doctor-primary",
+                                )}
+                              />
+                            </div>
+                            <div>
+                              <p className="font-medium">{speciality.name}</p>
+                              <p
+                                className={cn(
+                                  "text-xs",
+                                  formData.speciality === speciality.name
+                                    ? "text-white/80"
+                                    : "text-gray-500",
+                                )}
+                              >
+                                Click to select
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {formData.speciality && (
@@ -404,7 +450,7 @@ const Specialization: React.FC<SpecializationProps> = ({
                           key={service}
                           onClick={() => handleServiceToggle(service)}
                           className={cn(
-                            "p-3 border rounded-lg cursor-pointer transition-all",
+                            "p-3 border rounded-lg cursor-pointer transition-all hover:shadow-sm",
                             formData.services.includes(service)
                               ? "bg-doctor-primary text-white border-doctor-primary"
                               : "bg-white border-gray-200 hover:border-doctor-primary hover:bg-doctor-primary/5",

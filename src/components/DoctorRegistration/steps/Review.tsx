@@ -61,10 +61,13 @@ const Review: React.FC<ReviewProps> = ({ formData, onPrevious }) => {
     const workingDays = Object.entries(availability)
       .filter(
         ([_, dayData]: [string, any]) =>
-          dayData.isWorking || dayData.isAvailable,
+          dayData && (dayData.isWorking || dayData.isAvailable),
       )
       .map(([day, dayData]: [string, any]) => {
         const hours = dayData.workHours || dayData.hours;
+        if (!hours || !hours.start || !hours.end) {
+          return `${day}: Not configured`;
+        }
         return `${day}: ${hours.start} - ${hours.end}`;
       });
 
@@ -79,6 +82,48 @@ const Review: React.FC<ReviewProps> = ({ formData, onPrevious }) => {
     phonepe: "PhonePe",
     netbanking: "Net Banking",
     upi: "UPI",
+  };
+
+  const getClinicAvailabilitySummary = () => {
+    if (
+      !formData.clinicAvailability ||
+      Object.keys(formData.clinicAvailability).length === 0
+    ) {
+      return "No availability set";
+    }
+
+    return (
+      Object.entries(formData.clinicAvailability)
+        .map(([clinicId, data]) => {
+          const clinic = formData.clinics.find((c) => c.id === clinicId);
+          if (!clinic || !data || !data.days) {
+            return null;
+          }
+
+          const workingDays = Object.keys(data.days).filter(
+            (day) => data.days && data.days[day] && data.days[day].isWorking,
+          ).length;
+
+          return `${clinic.name}: ${workingDays} days/week`;
+        })
+        .filter(Boolean)
+        .join(", ") || "No availability set"
+    );
+  };
+
+  const getOnlineAvailabilitySummary = () => {
+    if (
+      !formData.onlineConsultationHours ||
+      Object.keys(formData.onlineConsultationHours).length === 0
+    ) {
+      return "Not available";
+    }
+
+    const availableDays = Object.values(
+      formData.onlineConsultationHours,
+    ).filter((day) => day && day.isAvailable).length;
+
+    return `${availableDays} days/week`;
   };
 
   return (
@@ -106,17 +151,18 @@ const Review: React.FC<ReviewProps> = ({ formData, onPrevious }) => {
                     />
                   ) : (
                     <AvatarFallback className="bg-doctor-primary text-white text-lg">
-                      {formData.firstName?.[0]}
-                      {formData.lastName?.[0]}
+                      {formData.firstName?.[0] || "D"}
+                      {formData.lastName?.[0] || "R"}
                     </AvatarFallback>
                   )}
                 </Avatar>
                 <div>
                   <h3 className="text-xl font-bold text-doctor-text">
-                    Dr. {formData.firstName} {formData.lastName}
+                    Dr. {formData.firstName || "First"}{" "}
+                    {formData.lastName || "Last"}
                   </h3>
                   <p className="text-doctor-primary font-medium">
-                    {formData.speciality}
+                    {formData.speciality || "Not selected"}
                   </p>
                   {formData.isMobileVerified && (
                     <Badge className="bg-green-600 mt-1">
@@ -142,38 +188,52 @@ const Review: React.FC<ReviewProps> = ({ formData, onPrevious }) => {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-gray-500">First Name</p>
-                    <p className="font-medium">{formData.firstName}</p>
+                    <p className="font-medium">
+                      {formData.firstName || "Not provided"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500">Last Name</p>
-                    <p className="font-medium">{formData.lastName}</p>
+                    <p className="font-medium">
+                      {formData.lastName || "Not provided"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500">Date of Birth</p>
-                    <p className="font-medium">{formData.dateOfBirth}</p>
+                    <p className="font-medium">
+                      {formData.dateOfBirth || "Not provided"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500">Mobile</p>
-                    <p className="font-medium">{formData.mobileNumber}</p>
+                    <p className="font-medium">
+                      {formData.mobileNumber || "Not provided"}
+                    </p>
                   </div>
                 </div>
 
                 <div>
                   <p className="text-gray-500 text-sm mb-2">Languages</p>
                   <div className="flex flex-wrap gap-1">
-                    {formData.languages.map((lang, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="text-xs"
-                      >
-                        {lang}
-                      </Badge>
-                    ))}
+                    {formData.languages && formData.languages.length > 0 ? (
+                      formData.languages.map((lang, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="text-xs"
+                        >
+                          {lang}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="text-sm text-gray-400">
+                        No languages selected
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {formData.awards.length > 0 && (
+                {formData.awards && formData.awards.length > 0 && (
                   <div>
                     <p className="text-gray-500 text-sm mb-2">Awards</p>
                     <div className="space-y-1">
@@ -204,11 +264,15 @@ const Review: React.FC<ReviewProps> = ({ formData, onPrevious }) => {
                 <div className="space-y-3">
                   <div className="flex items-center space-x-2">
                     <Phone className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm">{formData.phoneNumber}</span>
+                    <span className="text-sm">
+                      {formData.phoneNumber || "Not provided"}
+                    </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Mail className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm">{formData.email}</span>
+                    <span className="text-sm">
+                      {formData.email || "Not provided"}
+                    </span>
                   </div>
                 </div>
 
@@ -216,23 +280,29 @@ const Review: React.FC<ReviewProps> = ({ formData, onPrevious }) => {
 
                 <div>
                   <p className="text-gray-500 text-sm mb-2">
-                    Clinics ({formData.clinics.length})
+                    Clinics ({formData.clinics ? formData.clinics.length : 0})
                   </p>
                   <div className="space-y-2">
-                    {formData.clinics.map((clinic, index) => (
-                      <div
-                        key={clinic.id}
-                        className="flex items-start space-x-2"
-                      >
-                        <Building className="w-4 h-4 text-doctor-primary mt-0.5" />
-                        <div>
-                          <p className="font-medium text-sm">{clinic.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {clinic.address}
-                          </p>
+                    {formData.clinics && formData.clinics.length > 0 ? (
+                      formData.clinics.map((clinic, index) => (
+                        <div
+                          key={clinic.id}
+                          className="flex items-start space-x-2"
+                        >
+                          <Building className="w-4 h-4 text-doctor-primary mt-0.5" />
+                          <div>
+                            <p className="font-medium text-sm">{clinic.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {clinic.address}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <span className="text-sm text-gray-400">
+                        No clinics added
+                      </span>
+                    )}
                   </div>
                 </div>
               </CardContentInner>
@@ -250,25 +320,33 @@ const Review: React.FC<ReviewProps> = ({ formData, onPrevious }) => {
                 <div className="grid grid-cols-1 gap-3 text-sm">
                   <div>
                     <p className="text-gray-500">Highest Degree</p>
-                    <p className="font-medium">{formData.highestDegree}</p>
+                    <p className="font-medium">
+                      {formData.highestDegree || "Not provided"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500">University/Institute</p>
-                    <p className="font-medium">{formData.university}</p>
+                    <p className="font-medium">
+                      {formData.university || "Not provided"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500">Medical License No.</p>
                     <p className="font-medium">
-                      {formData.medicalLicenseNumber}
+                      {formData.medicalLicenseNumber || "Not provided"}
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-500">Issuing Authority</p>
-                    <p className="font-medium">{formData.issuingAuthority}</p>
+                    <p className="font-medium">
+                      {formData.issuingAuthority || "Not provided"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500">License Expiry</p>
-                    <p className="font-medium">{formData.licenseExpiryDate}</p>
+                    <p className="font-medium">
+                      {formData.licenseExpiryDate || "Not provided"}
+                    </p>
                   </div>
                 </div>
 
@@ -294,24 +372,37 @@ const Review: React.FC<ReviewProps> = ({ formData, onPrevious }) => {
               <CardContentInner className="space-y-4">
                 <div>
                   <p className="text-gray-500 text-sm">Primary Speciality</p>
-                  <Badge className="bg-doctor-primary mt-1">
-                    {formData.speciality}
-                  </Badge>
+                  {formData.speciality ? (
+                    <Badge className="bg-doctor-primary mt-1">
+                      {formData.speciality}
+                    </Badge>
+                  ) : (
+                    <span className="text-sm text-gray-400">Not selected</span>
+                  )}
                 </div>
 
                 <div>
                   <p className="text-gray-500 text-sm mb-2">Services Offered</p>
                   <div className="flex flex-wrap gap-1">
-                    {[...formData.services, ...formData.customServices].map(
-                      (service, index) => (
-                        <Badge
-                          key={index}
-                          variant="outline"
-                          className="text-xs"
-                        >
-                          {service}
-                        </Badge>
-                      ),
+                    {formData.services &&
+                    formData.customServices &&
+                    (formData.services.length > 0 ||
+                      formData.customServices.length > 0) ? (
+                      [...formData.services, ...formData.customServices].map(
+                        (service, index) => (
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="text-xs"
+                          >
+                            {service}
+                          </Badge>
+                        ),
+                      )
+                    ) : (
+                      <span className="text-sm text-gray-400">
+                        No services selected
+                      </span>
                     )}
                   </div>
                 </div>
@@ -331,13 +422,13 @@ const Review: React.FC<ReviewProps> = ({ formData, onPrevious }) => {
                   <div>
                     <p className="text-gray-500">Clinic Visit</p>
                     <p className="font-medium">
-                      ₹{formData.clinicVisitCharges}
+                      ₹{formData.clinicVisitCharges || 0}
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-500">Online Consultation</p>
                     <p className="font-medium">
-                      ₹{formData.onlineConsultationCharges}
+                      ₹{formData.onlineConsultationCharges || 0}
                     </p>
                   </div>
                 </div>
@@ -345,19 +436,24 @@ const Review: React.FC<ReviewProps> = ({ formData, onPrevious }) => {
                 <div>
                   <p className="text-gray-500 text-sm mb-2">Payment Methods</p>
                   <div className="flex flex-wrap gap-1">
-                    {formData.paymentMethods.map((method) => (
-                      <Badge
-                        key={method}
-                        variant="secondary"
-                        className="text-xs"
-                      >
-                        {
-                          paymentMethodNames[
+                    {formData.paymentMethods &&
+                    formData.paymentMethods.length > 0 ? (
+                      formData.paymentMethods.map((method) => (
+                        <Badge
+                          key={method}
+                          variant="secondary"
+                          className="text-xs"
+                        >
+                          {paymentMethodNames[
                             method as keyof typeof paymentMethodNames
-                          ]
-                        }
-                      </Badge>
-                    ))}
+                          ] || method}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="text-sm text-gray-400">
+                        No payment methods selected
+                      </span>
+                    )}
                   </div>
                 </div>
               </CardContentInner>
@@ -376,25 +472,8 @@ const Review: React.FC<ReviewProps> = ({ formData, onPrevious }) => {
                   <p className="text-gray-500 text-sm mb-2">
                     Clinic Availability
                   </p>
-                  <div className="text-xs space-y-1">
-                    {Object.entries(formData.clinicAvailability).map(
-                      ([clinicId, data]) => {
-                        const clinic = formData.clinics.find(
-                          (c) => c.id === clinicId,
-                        );
-                        const workingDays = Object.keys(data.days || {}).filter(
-                          (day) => data.days?.[day]?.isWorking,
-                        ).length;
-
-                        return (
-                          <div key={clinicId}>
-                            <p className="font-medium">
-                              {clinic?.name}: {workingDays} days/week
-                            </p>
-                          </div>
-                        );
-                      },
-                    )}
+                  <div className="text-xs">
+                    <p>{getClinicAvailabilitySummary()}</p>
                   </div>
                 </div>
 
@@ -402,14 +481,7 @@ const Review: React.FC<ReviewProps> = ({ formData, onPrevious }) => {
                   <p className="text-gray-500 text-sm mb-2">
                     Online Consultation
                   </p>
-                  <p className="text-xs">
-                    {
-                      Object.values(formData.onlineConsultationHours).filter(
-                        (day) => day.isAvailable,
-                      ).length
-                    }{" "}
-                    days/week
-                  </p>
+                  <p className="text-xs">{getOnlineAvailabilitySummary()}</p>
                 </div>
               </CardContentInner>
             </Card>
@@ -422,7 +494,7 @@ const Review: React.FC<ReviewProps> = ({ formData, onPrevious }) => {
             </CardHeader>
             <CardContentInner>
               <p className="text-sm text-gray-700 leading-relaxed">
-                {formData.bio}
+                {formData.bio || "No bio provided"}
               </p>
             </CardContentInner>
           </Card>

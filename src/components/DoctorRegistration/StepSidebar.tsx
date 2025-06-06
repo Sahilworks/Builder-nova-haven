@@ -34,26 +34,20 @@ const StepSidebar: React.FC<StepSidebarProps> = ({
           {steps.map((step, index) => {
             const isCompleted = step.id < currentStep;
             const isCurrent = step.id === currentStep;
-            const isAccessible = step.id <= currentStep;
 
             return (
               <div
                 key={step.id}
                 className={cn(
-                  "flex items-center p-4 rounded-lg cursor-pointer transition-all duration-200",
+                  'flex items-center p-4 rounded-lg cursor-pointer transition-all duration-200',
                   {
-                    "bg-doctor-primary text-white shadow-md": isCurrent,
-                    "bg-green-50 text-green-800 hover:bg-green-100":
-                      isCompleted,
-                    "bg-gray-50 text-gray-600 hover:bg-gray-100":
-                      !isCurrent && !isCompleted && isAccessible,
-                    "bg-gray-50 text-gray-400 cursor-not-allowed":
-                      !isAccessible,
-                  },
+                    'bg-doctor-primary text-white shadow-md': isCurrent,
+                    'bg-green-50 text-green-800 hover:bg-green-100': isCompleted,
+                    'bg-gray-50 text-gray-600 hover:bg-gray-100': !isCurrent && !isCompleted,
+                  }
                 )}
-                onClick={() => isAccessible && onStepClick(step.id)}
+                onClick={() => onStepClick(step.id)}
               >
-                <div className="flex items-center w-full">
                   <div className="flex-shrink-0 mr-3">
                     {isCompleted ? (
                       <CheckCircle className="w-6 h-6 text-green-600" />
@@ -86,15 +80,12 @@ const StepSidebar: React.FC<StepSidebarProps> = ({
                       )}
                     </div>
                     <p
-                      className={cn("text-sm font-medium mt-1", {
-                        "text-white": isCurrent,
-                        "text-green-800": isCompleted,
-                        "text-gray-700":
-                          !isCurrent && !isCompleted && isAccessible,
-                        "text-gray-400": !isAccessible,
+                      className={cn('text-sm font-medium mt-1', {
+                        'text-white': isCurrent,
+                        'text-green-800': isCompleted,
+                        'text-gray-700': !isCurrent && !isCompleted,
                       })}
                     >
-                      {step.title}
                     </p>
                   </div>
                 </div>
